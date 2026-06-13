@@ -1,0 +1,89 @@
+:root {
+  /* ==========================
+     COLORS
+  ========================== */
+
+  --color-primary: #1db954;
+  --color-primary-hover: #1ed760;
+
+  --color-secondary: #191414;
+
+  --color-background: #0f0f0f;
+  --color-surface: #181818;
+  --color-surface-light: #242424;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #b3b3b3;
+
+  --color-border: #2a2a2a;
+
+  --color-success: #22c55e;
+  --color-warning: #facc15;
+  --color-error: #ef4444;
+
+  /* ==========================
+     TYPOGRAPHY
+  ========================== */
+
+  --font-family-primary: "Inter", sans-serif;
+
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-md: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.5rem;    /* 24px */
+  --font-size-2xl: 2rem;     /* 32px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ==========================
+     SPACING
+  ========================== */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ==========================
+     BORDER RADIUS
+  ========================== */
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* ==========================
+     SHADOWS
+  ========================== */
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.3);
+
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+
+  /* ==========================
+     TRANSITIONS
+  ========================== */
+
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+
+  /* ==========================
+     CONTAINER
+  ========================== */
+
+  --container-width: 1200px;
+}

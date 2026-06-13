@@ -130,8 +130,12 @@ export async function googleAuthCallback(req,res) {
             email:isUserAlreadyExist.email,
             fullName:isUserAlreadyExist.fullName
         },_config.JWT_SECRET,{expiresIn:'2d'})
-
+ 
         res.cookie('token',token)
+
+        if(user.role === 'artist'){
+            return res.redirect('http://localhost:5173/artist/dashboard')
+        }
 
         if(isUserAlreadyExist === 'artist'){
         return redirect('http://localhost:5173/artist/dashboard')
