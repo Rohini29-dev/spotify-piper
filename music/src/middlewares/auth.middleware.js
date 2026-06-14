@@ -22,6 +22,26 @@ export async function authArtistMiddleware(req,res,next) {
 
     } catch (error) {
          console.log(error)
-        return res.status(500).json({ message: 'Internal server error' });
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+}
+
+export async function authUserMiddleware(req,res,next) {
+    const token = req.cookies.token 
+
+    if(!token){
+        return res.status(401).json({message:'Unauthorized'})
+    }
+
+    try {
+        const decoded = jwt.verify(token,_config.JWT_SECRET);
+        req.user = decoded;
+
+        next()
+
+    } catch (error) {
+        console.log(error);
+                return res.status(401).json({ message: 'Unauthorized' });
+
     }
 }
