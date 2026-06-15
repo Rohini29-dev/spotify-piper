@@ -1,62 +1,31 @@
-import { useNavigate } from "react-router-dom";
-import "./Home.css";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react'
+import './Home.css'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
+export default function Home({ socket }) {
+  const navigate = useNavigate();
 
+  // Sample data; later can be replaced by API calls
+  const [ musics, setMusics ] = useState(
+    [
+      { id: 'm1', title: 'Midnight Echoes', artist: 'Alex Wave', coverImageUrl: 'https://via.placeholder.com/300?text=M1' },
+      { id: 'm2', title: 'Golden Skies', artist: 'Luna Sun', coverImageUrl: 'https://via.placeholder.com/300?text=M2' },
+      { id: 'm3', title: 'Fading Lights', artist: 'Neon Drift', coverImageUrl: 'https://via.placeholder.com/300?text=M3' },
+      { id: 'm4', title: 'Ocean Drift', artist: 'Deep Current', coverImageUrl: 'https://via.placeholder.com/300?text=M4' },
+      { id: 'm5', title: 'Solstice', artist: 'Alex Wave', coverImageUrl: 'https://via.placeholder.com/300?text=M5' },
+      { id: 'm6', title: 'Night Sparks', artist: 'Luna Sun', coverImageUrl: 'https://via.placeholder.com/300?text=M6' },
+    ]
+  )
 
-export default function Home({socket}) {
+  const [ playlists, setPlaylists ] = useState([
+    { id: 'p1', title: 'Chill Vibes', count: 32 },
+    { id: 'p2', title: 'Focus Beats', count: 24 },
+    { id: 'p3', title: 'Acoustic', count: 18 },
+    { id: 'p4', title: 'Late Night', count: 15 },
+  ])
 
-const navigate = useNavigate()
-
-const [playlists, setplaylists] = useState([
-   {
-    _id: 1,
-    title: "Chill Vibes",
-    totalSongs: 12,
-    coverImage:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
-  },
-  {
-    _id: 2,
-    title: "Focus Beats",
-    totalSongs: 8,
-    coverImage:
-      "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
-  },
-  {
-    _id: 3,
-    title: "Party Mix",
-    totalSongs: 15,
-    coverImage:
-      "https://images.unsplash.com/photo-1501612780327-45045538702b",
-  },
-])
-
-const [musics, setMusics] = useState([
-   {
-    _id: 1,
-    title: "Midnight Echoes",
-    artist: "Rohini",
-    coverImageUrl:
-      "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
-  },
-  {
-    _id: 2,
-    title: "Golden Skies",
-    artist: "Rohini",
-    coverImageUrl:
-      "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
-  },
-  {
-    _id: 3,
-    title: "Fading Lights",
-    artist: "Rohini",
-    coverImageUrl:
-      "https://images.unsplash.com/photo-1501612780327-45045538702b",
-  },
-])
-
-useEffect(() => {
+  useEffect(() => {
     axios.get("http://localhost:3002/api/music", { withCredentials: true })
       .then(res => {
         setMusics(res.data.musics.map(m => ({
@@ -76,86 +45,57 @@ useEffect(() => {
           count: p.musics.length
         })))
       })
-}, [])
 
-
+  }, [])
 
   return (
-    <div className="home">
-
-      {/* Header */}
-
-      <header className="home-header">
-        <h1>Spotify Piper</h1>
-        <p>Discover amazing music and playlists</p>
+    <div className="home-page stack" style={{ gap: 'var(--space-8)' }}>
+      <header className="home-hero">
+        <h1 className="home-title">Discover</h1>
+        <p className="text-muted home-tag">Trending playlists and new releases</p>
       </header>
 
-      {/* Playlists */}
-
-      <section className="section">
-        <div className="section-header">
-          <h2>Featured Playlists</h2>
+      <section className="home-section">
+        <div className="section-head">
+          <h2 className="section-title">Playlists</h2>
+          <button className="btn btn-small" type="button">View All</button>
         </div>
-
         <div className="playlist-grid">
-
-          {playlists.map((playlist) => (
-            <div
-              className="playlist-card"
-              key={playlist._id}
-            >
-              <img
-                src={playlist.coverImage}
-                alt={playlist.title}
-              />
-
-              <h3>{playlist.title}</h3>
-
-              <p>
-                {playlist.totalSongs} Songs
-              </p>
+          {playlists.map(p => (
+            <div key={p.id} className="playlist-card surface" tabIndex={0}>
+              <div className="playlist-info">
+                <h3 className="playlist-title" title={p.title}>{p.title}</h3>
+                <p className="playlist-meta text-muted">{p.count} tracks</p>
+              </div>
             </div>
           ))}
-
         </div>
       </section>
 
-      {/* Musics */}
-
-      <section className="section">
-        <div className="section-header">
-          <h2>Trending Musics</h2>
+      <section className="home-section">
+        <div className="section-head">
+          <h2 className="section-title">Musics</h2>
+          <button className="btn btn-small" type="button">Explore</button>
         </div>
-
-        <div 
-        onClick={() =>{
-          socket?.emit('play',{musicId:m.id}) 
-          navigate('/music/${m.id')}}
-        className="music-grid">
-
-          {musics.map((music) => (
+        <div className="music-grid">
+          {musics.map(m => (
             <div
-              className="music-card"
-              key={music._id}
-            >
-              <img
-                src={music.coverImageUrl}
-                alt={music.title}
-              />
-
-              <h3>{music.title}</h3>
-
-              <p>{music.artist}</p>
-
-              <button>
-                ▶ Play
-              </button>
+              onClick={() => {
+                socket?.emit("play", { musicId: m.id })
+                navigate(`/music/${m.id}`)
+              }}
+              key={m.id} className="music-card surface" tabIndex={0}>
+              <div className="music-cover-wrap">
+                <img src={m.coverImageUrl} alt="" className="music-cover" />
+              </div>
+              <div className="music-info">
+                <h3 className="music-title" title={m.title}>{m.title}</h3>
+                <p className="music-artist text-muted" title={m.artist}>{m.artist}</p>
+              </div>
             </div>
           ))}
-
         </div>
       </section>
-
     </div>
-  );
+  )
 }

@@ -1,118 +1,156 @@
-.home {
-  min-height: 100vh;
-  background: #07112d;
-  color: white;
-  padding: 32px;
+.home-page {
+    width: 100%;
 }
 
-.home-header {
-  margin-bottom: 40px;
+.home-hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
 }
 
-.home-header h1 {
-  font-size: 2.5rem;
+.home-title {
+    margin: 0;
+    font-size: var(--font-size-xl);
 }
 
-.home-header p {
-  color: #94a3b8;
-  margin-top: 8px;
+.home-tag {
+    margin: 0;
 }
 
-.section {
-  margin-bottom: 50px;
+.home-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
 }
 
-.section-header {
-  margin-bottom: 20px;
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
 }
 
-.section-header h2 {
-  font-size: 1.5rem;
+.section-title {
+    margin: 0;
+    font-size: var(--font-size-lg);
 }
 
-/* Playlist */
+/* Grids */
+.playlist-grid,
+.music-grid {
+    display: grid;
+    gap: var(--space-6);
+}
 
 .playlist-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
-
-.playlist-card {
-  background: #1b2742;
-  border-radius: 16px;
-  overflow: hidden;
-  transition: 0.3s;
-  cursor: pointer;
-}
-
-.playlist-card:hover {
-  transform: translateY(-5px);
-}
-
-.playlist-card img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-
-.playlist-card h3 {
-  padding: 16px 16px 8px;
-}
-
-.playlist-card p {
-  padding: 0 16px 16px;
-  color: #94a3b8;
-}
-
-/* Music */
 
 .music-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
+/* Card Base */
+.playlist-card,
 .music-card {
-  background: #1b2742;
-  border-radius: 16px;
-  padding: 16px;
-  transition: 0.3s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-alt);
+    cursor: pointer;
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.playlist-card:focus-visible,
+.music-card:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+}
+
+.playlist-card:hover,
 .music-card:hover {
-  transform: translateY(-5px);
+    background: var(--color-surface);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
-.music-card img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 12px;
+/* Covers */
+.playlist-cover-wrap,
+.music-cover-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
 }
 
-.music-card h3 {
-  margin-top: 12px;
+.playlist-cover,
+.music-cover-wrap .music-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
-.music-card p {
-  color: #94a3b8;
-  margin-top: 6px;
+/* Info */
+.playlist-info,
+.music-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
 }
 
-.music-card button {
-  margin-top: 12px;
-  width: 100%;
-  border: none;
-  background: #6d5efc;
-  color: white;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
+.playlist-title,
+.music-title {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.music-card button:hover {
-  background: #5a4bf0;
+.playlist-meta,
+.music-artist {
+    margin: 0;
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 900px) {
+
+    .playlist-grid,
+    .music-grid {
+        gap: var(--space-4);
+    }
+
+    .playlist-card,
+    .music-card {
+        padding: var(--space-3);
+    }
+}
+
+@media (max-width: 600px) {
+    .home-title {
+        font-size: var(--font-size-lg);
+    }
+
+    .section-title {
+        font-size: var(--font-size-md);
+    }
+
+    .playlist-grid,
+    .music-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
 }

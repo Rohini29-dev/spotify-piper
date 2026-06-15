@@ -1,43 +1,32 @@
-import MusicPlayer from "./pages/music/MusicPlayer";
-import UploadMusic from "./pages/artist/UploadMusic";
-import { Routes, Route } from "react-router-dom";
-
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-
-import Dashboard from "./pages/artist/Dashboard";
+import { Routes, Route, Link, NavLink } from 'react-router-dom'
+import './App.css'
+import { useState, useEffect } from 'react'
+import Home from './pages/Home'
+import Register from './pages/Register'
+import Login from './pages/Login'
+import Dashboard from './pages/artist/Dashboard'
+import UploadMusic from './pages/artist/UploadMusic'
+// import MusicPlayer from './pages/music/MusicPlayer'
 
 function App() {
+
+
+
   return (
-    <Routes>
-      <Route path="/" element={<Home socket ={socket} />} />
+    <div>
+      <main>
+        <Routes>
+          <Route path="/" element={<Home  />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/artist/dashboard" element={<Dashboard />} />
+          <Route path="/artist/dashboard/upload-music" element={<UploadMusic />} />
+          {/* <Route path="/music/:id" element={<MusicPlayer />} /> */}
+        </Routes>
+      </main>
+    </div>
 
-      <Route path="/login" element={<Login />} />
-
-      <Route path="/register" element={<Register />} />
-
-      {/* Artist Dashboard */}
-
-      <Route
-        path="/artist/dashboard"
-        element={<Dashboard />}
-      />
-
-
-<Route
-  path="/artist/upload-music"
-  element={<UploadMusic />}
-/>
-
-
-<Route
-  path="/music/:id"
-  element={<MusicPlayer />}
-/>
-      
-    </Routes>
-  );
+  )
 }
 
-export default App;
+export default App

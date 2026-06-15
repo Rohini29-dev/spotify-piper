@@ -1,166 +1,164 @@
-// import "./Register.css";
-import { useState } from "react";
-import "../styles/Register.css";
+import React, { useState } from 'react'
+import './Register.css'
 import axios from 'axios'
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
-const Register = () => {
-const Navigate = useNavigate()
-
-// const [form, setform] = useState({
-//     email:'',
-//     password:'',
-//     firstName:'',
-//     lastName:'',
-//     userType: 'user',
-// })
-
-const [firstName, setfirstName] = useState('')
-const [lastName, setlastName] = useState('')
-const [email, setemail] = useState('')
-const [password, setpassword] = useState('')
-const [role, setRole] = useState('user')
+export default function Register() {
 
 
-const submitHandler = async(e)=>{
-e.preventDefault()
+    const navigate = useNavigate();
 
-try {
-    
-    await axios.post('http://localhost:3000/api/auth/register',{
-        email:email,
-        fullName:{
-            firstName:firstName,
-            lastName:lastName
-        },
-        password:password,
-        role:role
+    // Local UI state only (no API calls as requested)
+    const [ form, setForm ] = useState({
+        email: '',
+        firstName: '',
+        lastName: '',
+        password: '',
+        userType: 'user',
+    })
 
-    },{
-        withCredentials:true
+    function handleChange(e) {
+        const { name, value } = e.target
+        setForm(f => ({ ...f, [ name ]: value }))
     }
 
-    
-)
-Navigate('/')
-} catch (error) {
-    console.error('error during registration:',err);
-    
-}
+    async function handleSubmit(e) {
+        e.preventDefault()
+        try {
 
-}
+            await axios.post("http://localhost:3000/api/auth/register", {
+                email: form.email,
+                fullname: {
+                    firstName: form.firstName,
+                    lastName: form.lastName
+                },
+                password: form.password,
+                role: form.userType
+            }, {
+                withCredentials: true
+            })
 
-  return (
-    <div className="register-page">
-      <div className="register-card">
-        <h1>Create Account</h1>
-        <p>Join Spotify Piper today</p>
+            navigate('/');
 
-        <button
-        onClick={()=>{
-            window.location.href = 'http://localhost:3000/api/auth/google'
-        }}
-        className="google-btn">
-          Continue with Google
-        </button>
+        } catch (err) {
+            console.error("Error during registration:", err);
+        }
+    }
 
-        <div className="divider">
-          <span>OR</span>
-        </div>
+    return (
+        <div className="register-wrapper">
+            <div className="register-card surface">
+                <h2 className="register-title">Create your account</h2>
+                <p className="text-muted" style={{ marginTop: 'var(--space-1)' }}>
+                    Join us to get started
+                </p>
 
-        <form
-        onSubmit={submitHandler}
-        className="register-form">
-          <div className="input-group">
-            <label>First Name</label>
-            <input
-            onChange={(e)=>setfirstName(e.target.value)}
-              type="text"
-              name="firstName"
-              value={firstName}
-              placeholder="Enter first name"
-            />
-          </div>
+                <button
+                    onClick={() => {
+                        window.location.href = 'http://localhost:3000/api/auth/google';
+                    }}
+                    type="button" className="btn btn-google" aria-label="Continue with Google">
+                    <span className="btn-google-icon" aria-hidden>G</span>
+                    Continue with Google
+                </button>
 
-          <div className="input-group">
-            <label>Last Name</label>
-            <input
-            onChange={(e)=>setlastName(e.target.value)}
-            
-              type="text"
-              name="lastName"
-              value={lastName}
-              placeholder="Enter last name"
-            />
-          </div>
+                <div className="divider" role="separator" aria-label="or continue with email">
+                    <span className="divider-line" />
+                    <span className="divider-text">or</span>
+                    <span className="divider-line" />
+                </div>
 
-          <div className="input-group">
-            <label>Email</label>
-            <input
-            onChange={(e)=>setemail(e.target.value)}
-              type="email"
-              name="email"
-              value={email}
-              placeholder="Enter email"
-            />
-          </div>
+                <form className="register-form stack" onSubmit={handleSubmit} noValidate>
+                    <div className="field-group">
+                        <label htmlFor="email">Email</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            required
+                            placeholder="you@example.com"
+                        />
+                    </div>
 
-          <div className="input-group">
-            <label>Password</label>
-            <input
-                onChange={(e)=>setpassword(e.target.value)}
+                    <div className="field-row">
+                        <div className="field-group">
+                            <label htmlFor="firstName">First name</label>
+                            <input
+                                id="firstName"
+                                name="firstName"
+                                type="text"
+                                autoComplete="given-name"
+                                value={form.firstName}
+                                onChange={handleChange}
+                                required
+                                placeholder="Jane"
+                            />
+                        </div>
+                        <div className="field-group">
+                            <label htmlFor="lastName">Last name</label>
+                            <input
+                                id="lastName"
+                                name="lastName"
+                                type="text"
+                                autoComplete="family-name"
+                                value={form.lastName}
+                                onChange={handleChange}
+                                required
+                                placeholder="Doe"
+                            />
+                        </div>
+                    </div>
 
-              type="password"
-              name="password"
-              value={password}
-              placeholder="Enter password"
-            /> 
-          </div>
+                    <fieldset className="field-group fieldset-radio">
+                        <legend className="legend">Account type</legend>
+                        <div className="radio-row">
+                            <label className="radio-option">
+                                <input
+                                    type="radio"
+                                    name="userType"
+                                    value="user"
+                                    checked={form.userType === 'user'}
+                                    onChange={handleChange}
+                                />
+                                <span>User</span>
+                            </label>
+                            <label className="radio-option">
+                                <input
+                                    type="radio"
+                                    name="userType"
+                                    value="artist"
+                                    checked={form.userType === 'artist'}
+                                    onChange={handleChange}
+                                />
+                                <span>Artist</span>
+                            </label>
+                        </div>
+                    </fieldset>
 
-          <div className="input-group">
-            <label>User Type</label>
+                    <div className="field-group">
+                        <label htmlFor="password">Password</label>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            autoComplete="new-password"
+                            value={form.password}
+                            onChange={handleChange}
+                            required
+                            placeholder="••••••••"
+                            minLength={8}
+                        />
+                        <p className="hint text-muted">Minimum 8 characters.</p>
+                    </div>
 
-            <div className="radio-group">
-              <label className="radio-option">
-                <input
-                onChange={(e)=>setRole(e.target.value)}
-                
-                  type="radio"
-                  name="role"
-                  value="user"
-                   checked={role === 'user'}
-                  defaultChecked
-                />
-                User
-              </label>
-
-              <label className="radio-option">
-                <input
-                onChange={(e)=>setRole(e.target.value)
-                }
-                  type="radio"
-                  name="role"
-                  value="artist"
-                   checked={role === 'artist'}
-                />
-                Artist
-              </label>
+                    <button type="submit" className="btn btn-primary" aria-label="Create account">
+                        Create account
+                    </button>
+                </form>
             </div>
-          </div>
-
-          <button type="submit" className="submit-btn">
-            Create Account
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default Register;
-
-
-
-
-
-
+        </div>
+    )
+}
