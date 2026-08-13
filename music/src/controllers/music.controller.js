@@ -1,4 +1,4 @@
-import { uploadFile, getPresignedUrl } from "../services/storage.service.js";
+import { uploadFile } from "../services/storage.service.js";
 import musicModel from "../models/music.model.js"
 import playlistModel from "../models/playlist.model.js";
 
@@ -12,19 +12,22 @@ export async function uploadMusic(req, res) {
 
     try {
 
-        const musicKey = await uploadFile(musicFile);
-        const coverImageKey = await uploadFile(coverImageFile);
+      const musicResult = await uploadFile(musicFile, "songs");
+const coverResult = await uploadFile(coverImageFile, "covers");
+          
 
-        const music = await musicModel.create({
-            title: req.body.title,
-            artist: req.user.fullname.firstName + " " + req.user.fullname.lastName,
-            artistId: req.user.id,
-            musicKey,
-            coverImageKey
-        })
+     const music = await musicModel.create({
+    title: req.body.title,
+    artist: `${req.user.fullName.firstName} ${req.user.fullName.lastName}`,
+    artistId: req.user.id,
+    musicKey: musicResult.url,
+    coverImageKey: coverResult.url
+});
 
-        return res.status(201).json({ message: 'Music uploaded successfully', music });
-
+return res.status(201).json({
+    message: "Music uploaded successfully",
+    music
+});
     } catch (err) {
         console.log(err)
         return res.status(500).json({ message: 'Internal server error' });
@@ -32,6 +35,8 @@ export async function uploadMusic(req, res) {
 
 
 }
+
+
 
 export async function getMusicById(req, res) {
     const { id } = req.params;
@@ -40,126 +45,242 @@ export async function getMusicById(req, res) {
         const music = await musicModel.findById(id).lean();
 
         if (!music) {
-            return res.status(404).json({ message: 'Music not found' });
+            return res.status(404).json({
+                message: "Music not found"
+            });
         }
 
-        music.musicUrl = await getPresignedUrl(music.musicKey);
-        music.coverImageUrl = await getPresignedUrl(music.coverImageKey);
+        music.musicUrl = `http://localhost:3002${music.musicKey}`;
+        music.coverImageUrl = `http://localhost:3002${music.coverImageKey}`;
 
-        return res.status(200).json({ music });
+        return res.status(200).json({
+            message: "Music fetched successfully",
+            music
+        });
+
     } catch (err) {
         console.log(err);
-        return res.status(500).json({ message: 'Internal server error' });
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
     }
 }
 
 export async function getAllMusics(req, res) {
-
     const { skip = 0, limit = 10 } = req.query;
 
     try {
-        const musicsDocs = await musicModel.find().skip(skip).limit(limit).lean();
+        const musicsDocs = await musicModel
+            .find()
+            .skip(Number(skip))
+            .limit(Number(limit))
+            .sort({ createdAt: -1 })
+            .lean();
 
-        const musics = []
+        const musics = musicsDocs.map((music) => ({
+            ...music,
+            musicUrl: `${process.env.BASE_URL}${music.musicKey}`,
+coverImageUrl: `${process.env.BASE_URL}${music.coverImageKey}`,
+        }));
 
-        for (let music of musicsDocs) {
-            music.musicUrl = await getPresignedUrl(music.musicKey);
-            music.coverImageUrl = await getPresignedUrl(music.coverImageKey);
-            musics.push(music);
-        }
+        return res.status(200).json({
+            message: "Musics fetched successfully",
+            musics
+        });
 
-        return res.status(200).json({ message: "Musics fetched successfully", musics });
     } catch (err) {
         console.log(err);
-        return res.status(500).json({ message: 'Internal server error' });
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
     }
 }
 
 export async function getArtistMusics(req, res) {
     try {
-        const musicsDocs = await musicModel.find({ artistId: req.user.id }).lean();
+        const musicsDocs = await musicModel
+            .find({ artistId: req.user.id })
+            .lean();
 
-        const musics = []
+        const musics = musicsDocs.map((music) => ({
+            ...music,
+            musicUrl: `${process.env.BASE_URL}${music.musicKey}`,
+            coverImageUrl: `${process.env.BASE_URL}${music.coverImageKey}`,
+        }));
 
-        for (let music of musicsDocs) {
-            music.musicUrl = await getPresignedUrl(music.musicKey);
-            music.coverImageUrl = await getPresignedUrl(music.coverImageKey);
-            musics.push(music);
-        }
+        return res.status(200).json({
+            musics
+        });
 
-        return res.status(200).json({ musics });
     } catch (err) {
         console.log(err);
-        return res.status(500).json({ message: 'Internal server error' });
+
+        return res.status(500).json({
+            message: 'Internal server error'
+        });
     }
 }
 
+
+
 export async function createPlaylist(req, res) {
+
     const { title, musics } = req.body;
 
     try {
+
         const playlist = await playlistModel.create({
-            artist: req.user.fullname.firstName + " " + req.user.fullname.lastName,
+            artist: `${req.user.fullName.firstName} ${req.user.fullName.lastName}`,
             artistId: req.user.id,
             title,
             userId: req.user.id,
             musics
-        })
+        });
 
-        return res.status(201).json({ message: 'Playlist created successfully', playlist });
+        return res.status(201).json({
+            message: "Playlist created successfully",
+            playlist
+        });
 
     } catch (err) {
-        console.log(err)
-        return res.status(500).json({ message: 'Internal server error' });
+        console.log(err);
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
     }
 }
 
 export async function getPlaylists(req, res) {
     try {
-        const playlists = await playlistModel.find({ artistId: req.user.id })
-        return res.status(200).json({ playlists });
+        const playlists = await playlistModel.find().lean();
+
+        const updatedPlaylists = await Promise.all(
+            playlists.map(async (playlist) => {
+
+                let coverImageUrl = "";
+
+                if (playlist.musics.length > 0) {
+                    const firstMusic = await musicModel.findById(
+                        playlist.musics[0]
+                    ).lean();
+
+                    if (firstMusic) {
+                        coverImageUrl = `http://localhost:3002${firstMusic.coverImageKey}`;
+                    }
+                }
+
+                return {
+                    ...playlist,
+                    coverImageUrl,
+                };
+            })
+        );
+
+        return res.status(200).json({
+            message: "Playlists fetched successfully",
+            playlists: updatedPlaylists,
+        });
+
     } catch (err) {
         console.log(err);
-        return res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({
+            message: "Internal server error",
+        });
     }
 }
 
+
 export async function getPlaylistById(req, res) {
+
     const { id } = req.params;
 
     try {
+
         const playlistDoc = await playlistModel.findById(id).lean();
 
         if (!playlistDoc) {
-            return res.status(404).json({ message: 'Playlist not found' });
+            return res.status(404).json({
+                message: "Playlist not found"
+            });
         }
 
-        const musics = []
+        const musics = [];
 
-        for (let musicId of playlistDoc.musics) {
+        for (const musicId of playlistDoc.musics) {
+
             const music = await musicModel.findById(musicId).lean();
+
             if (music) {
-                music.musicUrl = await getPresignedUrl(music.musicKey);
-                music.coverImageUrl = await getPresignedUrl(music.coverImageKey);
+
+                music.musicUrl =
+                    `http://localhost:3002${music.musicKey}`;
+
+                music.coverImageUrl =
+                    `http://localhost:3002${music.coverImageKey}`;
+
                 musics.push(music);
             }
         }
 
         playlistDoc.musics = musics;
 
-        return res.status(200).json({ playlist: playlistDoc });
+        return res.status(200).json({
+            message: "Playlist fetched successfully",
+            playlist: playlistDoc
+        });
+
     } catch (err) {
+
         console.log(err);
-        return res.status(500).json({ message: 'Internal server error' });
+
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+
     }
+
 }
 
 export async function getArtistPlaylists(req, res) {
     try {
-        const playlists = await playlistModel.find({ artistId: req.user.id })
-        return res.status(200).json({ playlists });
+        const playlists = await playlistModel.find({
+            artistId: req.user.id,
+        }).lean();
+
+        const updatedPlaylists = await Promise.all(
+            playlists.map(async (playlist) => {
+
+                let coverImageUrl = "";
+
+                if (playlist.musics.length > 0) {
+                    const firstMusic = await musicModel.findById(
+                        playlist.musics[0]
+                    ).lean();
+
+                    if (firstMusic) {
+                        coverImageUrl = `http://localhost:3002${firstMusic.coverImageKey}`;
+                    }
+                }
+
+                return {
+                    ...playlist,
+                    coverImageUrl,
+                };
+            })
+        );
+
+        return res.status(200).json({
+            playlists: updatedPlaylists,
+        });
+
     } catch (err) {
         console.log(err);
-        return res.status(500).json({ message: 'Internal server error' });
+
+        return res.status(500).json({
+            message: "Internal server error",
+        });
     }
 }

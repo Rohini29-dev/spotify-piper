@@ -1,28 +1,30 @@
-import { body , validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
+import _config from "../config/config.js";
 
+export default function authMiddleware(req, res, next) {
 
-async function validate(req,res,next) {
-    const errors = validationResult(req);
+    const token = req.cookies.token;
 
-    if(!errors.isEmpty()){
-        return res.status(400).json({error:errors.array()})
+    if (!token) {
+        return res.status(401).json({
+            message: "Unauthorized"
+        });
     }
 
-    next()
+    try {
+
+        const decoded = jwt.verify(token, _config.JWT_SECRET);
+
+        req.user = decoded;
+
+        next();
+
+    } catch (err) {
+
+        return res.status(401).json({
+            message: "Invalid Token"
+        });
+
+    }
+
 }
-
-
-
-export const registerUserValidationRules = [
-    body('email').isEmail().withMessage('Inavalid email address'),
-    body('password').isLength({min:6}).withMessage('password must be at least 6 characters long'),
-    body('fullName.firstName').notEmpty().withMessage('Firstname is required'),
-    body('fullName.lastName').notEmpty().withMessage('Lastname is required'),
-
-    validate
-]
-
-export const loginUserValidationRules = [ 
-    body('email').isEmail().withMessage('Inavlid email address'),
-    body('password').isLength().withMessage('password must be at least 6 characters long')
-]

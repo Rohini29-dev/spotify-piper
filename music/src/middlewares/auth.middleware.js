@@ -13,7 +13,7 @@ export async function authArtistMiddleware(req,res,next) {
 
     try {
         const decoded = jwt.verify(token,_config.JWT_SECRET)
-
+console.log(decoded);
         if(decoded.role !== 'artist'){
             return res.status(403).json({message:'Forbidden'});
         }

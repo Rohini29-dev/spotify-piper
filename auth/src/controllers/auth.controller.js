@@ -3,6 +3,7 @@ import userModel from '../models/user.model.js'
 import bcrypt from 'bcryptjs'
 import _config from '../config/config.js';
 import {publishToQueue} from '../broker/broker.js'
+import redis from '../db/redis.js';
 
 
 export async function register(req,res) {
@@ -44,14 +45,16 @@ export async function register(req,res) {
     },_config.JWT_SECRET)
 
 
-    res.cookie(token)
+    res.cookie("token", token, {
+    httpOnly: true
+});
 
     return res.status(201).json({
         message:"user registerd successfully ",
         user:{
              id: user.id,
             email: user.email,
-            fullname: user.fullname,
+            fullName: user.fullName,
             role: user.role
         }
     })
@@ -59,7 +62,6 @@ export async function register(req,res) {
   } catch (error) {
     console.error('error =>',error);
 
-    // res.status(500).json({error})
     
   }
 }
@@ -77,6 +79,7 @@ try {
 
     const isPasswordValid = await bcrypt.compare(password,user.password)
 
+    
     if(!isPasswordValid){
         return res.status(400).json({
             message:"Invalid password"
@@ -89,7 +92,10 @@ try {
         fullName:user.fullName
     },_config.JWT_SECRET,{expiresIn:'2d'})
 
-    res.cookie('token',token)
+    res.cookie("token", token, {
+    httpOnly: true,
+    sameSite: "lax",
+});
 
     return res.status(200).json({
         message:"user logged sucessfully",
@@ -107,7 +113,6 @@ try {
 }
 
 }
-
 
 export async function googleAuthCallback(req,res) {
     const user = req.user
@@ -174,6 +179,38 @@ export async function googleAuthCallback(req,res) {
   
 
     
+
+}
+
+export async function logOutUser(req,res) {
+    try {
+        const token = req.cookies.token
+        if(token){
+            await redis.set(`blacklist:${token}`,"token",'EX',24*60*60)
+        }
+
+        res.clearCookie("token",{
+            httpOnly:true,
+            secure:true
+        })
+
+        return res.status(200).json({
+            message:"user logout sucessfully"
+        })
+    } catch (error) {
+     console.log(" ERROR", error);
+    res.status(500).json({
+      message: "internal server error",
+    });
+        
+    }
+  }
+
+export async function getCurrentUser(req, res) {
+
+    return res.status(200).json({
+        user: req.user
+    });
 
 }
 

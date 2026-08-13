@@ -1,41 +1,24 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
-import config from "../config/config.js"
-import { v4 as uuidv4 } from 'uuid';
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
+export async function uploadFile(file, folder = "songs") {
+    const uploadDir = path.join(process.cwd(), "uploads", folder);
 
-const s3 = new S3Client({
-    region: config.AWS_REGION,
-    credentials: {
-        accessKeyId: config.AWS_ACCESS_KEY_ID,
-        secretAccessKey: config.AWS_SECRET_ACCESS_KEY
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
     }
-})
 
+    const extension = path.extname(file.originalname);
 
-export async function uploadFile(file) {
+    const fileName = `${uuidv4()}${extension}`;
 
-    const key = `${uuidv4()}-${file.originalname}`;
+    const filePath = path.join(uploadDir, fileName);
 
-    const command = new PutObjectCommand({
-        Bucket: 'spotify-piper',
-        Body: file.buffer,
-        Key: key,
-    })
+    fs.writeFileSync(filePath, file.buffer);
 
-    const response = await s3.send(command);
-
-    return key;
-
-}
-
-export async function getPresignedUrl(key) {
-    const command = new GetObjectCommand({
-        Bucket: 'spotify-piper',
-        Key: key,
-    })
-
-    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-
-    return url;
+    return {
+        url: `/uploads/${folder}/${fileName}`,
+        key: fileName
+    };
 }
