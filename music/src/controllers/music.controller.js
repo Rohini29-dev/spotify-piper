@@ -153,45 +153,49 @@ export async function createPlaylist(req, res) {
     }
 }
 
+
+
 export async function getPlaylists(req, res) {
-    try {
-        const playlists = await playlistModel.find().lean();
+  try {
+    const playlists = await playlistModel
+      .find()
+      .populate("musics");
 
-        const updatedPlaylists = await Promise.all(
-            playlists.map(async (playlist) => {
+    const playlistsWithUrls = playlists.map((playlist) => {
+      return {
+        _id: playlist._id,
+        title: playlist.title,
+        artist: playlist.artist,
+        artistId: playlist.artistId,
 
-                let coverImageUrl = "";
+        musics: playlist.musics.map((music) => {
+          return {
+            _id: music._id,
+            title: music.title,
+            artist: music.artist,
+            artistId: music.artistId,
 
-                if (playlist.musics.length > 0) {
-                    const firstMusic = await musicModel.findById(
-                        playlist.musics[0]
-                    ).lean();
+            musicUrl: `http://localhost:3002${music.musicKey}`,
 
-                    if (firstMusic) {
-                        coverImageUrl = `http://localhost:3002${firstMusic.coverImageKey}`;
-                    }
-                }
+            coverImageUrl: `http://localhost:3002${music.coverImageKey}`,
+          };
+        }),
+      };
+    });
 
-                return {
-                    ...playlist,
-                    coverImageUrl,
-                };
-            })
-        );
+    return res.status(200).json({
+      message: "Playlists fetched successfully",
+      playlists: playlistsWithUrls,
+    });
 
-        return res.status(200).json({
-            message: "Playlists fetched successfully",
-            playlists: updatedPlaylists,
-        });
+  } catch (err) {
+    console.log(err);
 
-    } catch (err) {
-        console.log(err);
-        return res.status(500).json({
-            message: "Internal server error",
-        });
-    }
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
 }
-
 
 export async function getPlaylistById(req, res) {
 
