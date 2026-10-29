@@ -1,102 +1,100 @@
+
 import { useEffect, useState } from "react";
-import axios from "axios";
-import "./Home.css";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
+import { asyncLoadHomeData } from "../../store/actions/musicAction";
+import "./Home.css";
 
 const Home = ({ socket }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [musics, setMusics] = useState([]);
-  const [playlists, setPlaylists] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    musics = [],
+    playlists = [],
+    loading,
+    error,
+  } = useSelector((state) => state.musicReducer);
 
   const [currentMusic, setCurrentMusic] = useState(null);
 
-  // =========================
-  // Fetch Home Data
-  // =========================
-
   useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        setLoading(true);
-        setError("");
+    dispatch(asyncLoadHomeData());
+  }, [dispatch]);
 
-        const [musicRes, playlistRes] = await Promise.all([
-          axios.get("http://localhost:3002/api/music", {
-            withCredentials: true,
-          }),
+  // Handle artist as either a string or an object.
+  const getArtistName = (music) => {
+    if (typeof music?.artist === "string") {
+      return music.artist;
+    }
 
-          axios.get("http://localhost:3002/api/music/playlist", {
-            withCredentials: true,
-          }),
-        ]);
+    if (music?.artist?.fullName) {
+      return music.artist.fullName;
+    }
 
-        console.log("Music response:", musicRes.data);
-        console.log("Playlist response:", playlistRes.data);
+    if (music?.artist?.firstName) {
+      return `${music.artist.firstName} ${
+        music.artist.lastName || ""
+      }`.trim();
+    }
 
-        setMusics(musicRes.data.musics || []);
-        setPlaylists(playlistRes.data.playlists || []);
-      } catch (err) {
-        console.error("Home data error:", err);
+    return "Unknown Artist";
+  };
 
-        setError(
-          err.response?.data?.message ||
-            "Unable to load music. Please try again."
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Support common cover-image response formats.
+  const getCoverImage = (music) => {
+    if (typeof music?.coverImageUrl === "string") {
+      return music.coverImageUrl;
+    }
 
-    fetchHomeData();
-  }, []);
+    if (typeof music?.coverImage === "string") {
+      return music.coverImage;
+    }
 
-  // =========================
-  // Play Music
-  // =========================
+    if (typeof music?.coverImage?.url === "string") {
+      return music.coverImage.url;
+    }
 
- const handlePlayMusic = (music) => {
-  if (!music?._id) return;
+    return "";
+  };
 
-  socket?.emit("playMusic", {
-    musicId: music._id,
-    currentTime: 0,
-  });
+  // ================= PLAY MUSIC =================
+  const handlePlayMusic = (music) => {
+    if (!music?._id) return;
 
-  navigate(`/music/${music._id}?sync=true&time=0`);
-};
+    setCurrentMusic(music);
 
-  // =========================
-  // Open Playlist
-  // =========================
+    socket?.emit("playMusic", {
+      musicId: music._id,
+      currentTime: 0,
+    });
 
+    navigate(`/music/${music._id}?sync=true&time=0`);
+  };
+
+  // ================= OPEN PLAYLIST =================
   const handleOpenPlaylist = (playlist) => {
     if (!playlist?._id) return;
 
-    navigate(`/playlist/${playlist._id}`);
+    navigate("/playlists", {
+      state: {
+        selectedPlaylistId: playlist._id,
+      },
+    });
   };
 
-  // =========================
-  // Loading
-  // =========================
-
+  // ================= LOADING =================
   if (loading) {
     return (
       <div className="home-page home-loading">
-        <div className="home-loader"></div>
-
+        <div className="home-loader" />
         <p>Loading your music...</p>
       </div>
     );
   }
 
-  // =========================
-  // Error
-  // =========================
-
+  // ================= ERROR =================
   if (error) {
     return (
       <div className="home-page">
@@ -104,8 +102,15 @@ const Home = ({ socket }) => {
           <div className="home-error-icon">⚠️</div>
 
           <h2>Something went wrong</h2>
-
           <p>{error}</p>
+
+          <button
+            type="button"
+            className="home-view-all"
+            onClick={() => dispatch(asyncLoadHomeData())}
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -114,17 +119,10 @@ const Home = ({ socket }) => {
   return (
     <div className="home-page">
       <div className="home-container">
-
-        {/* =====================================================
-            HERO
-        ===================================================== */}
-
+        {/* ================= HERO ================= */}
         <section className="home-hero">
-
           <div>
-            <p className="home-subtitle">
-              DISCOVER MUSIC
-            </p>
+            <p className="home-subtitle">DISCOVER MUSIC</p>
 
             <h1>
               Your Music.
@@ -138,316 +136,176 @@ const Home = ({ socket }) => {
             </p>
           </div>
 
-          <div className="hero-music-icon">
-            ♪
-          </div>
-
+          <div className="hero-music-icon">♪</div>
         </section>
 
-
-        {/* =====================================================
-            PLAYLISTS
-        ===================================================== */}
-
+        {/* ================= PLAYLISTS ================= */}
         <section className="home-section">
-
           <div className="home-section-header">
-
             <div>
               <h2>Featured Playlists</h2>
-
-              <p>
-                Explore playlists created by artists
-              </p>
+              <p>Explore playlists created by artists</p>
             </div>
 
             <button
+              type="button"
               className="home-view-all"
-              onClick={() => {
-                // Future: navigate("/playlists")
-              }}
+              onClick={() => navigate("/playlists")}
             >
               View All
             </button>
-
           </div>
 
-
-          {/* No Playlists */}
-
           {playlists.length === 0 ? (
-
             <div className="home-empty">
-
               <div>📀</div>
-
-              <h3>
-                No playlists available
-              </h3>
-
-              <p>
-                Check back later for new playlists.
-              </p>
-
+              <h3>No playlists available</h3>
+              <p>Check back later for new playlists.</p>
             </div>
-
           ) : (
-
             <div className="home-playlist-grid">
-
               {playlists.map((playlist, index) => {
-
-                const firstMusic =
-                  playlist.musics?.[0];
+                const firstMusic = playlist.musics?.[0];
+                const playlistCover = getCoverImage(firstMusic);
 
                 return (
-
                   <div
                     className="home-playlist-card"
                     key={playlist._id || index}
-                    onClick={() =>
-                      handleOpenPlaylist(playlist)
-                    }
+                    onClick={() => handleOpenPlaylist(playlist)}
                   >
-
-                    {/* =========================
-                        Playlist Image
-                    ========================= */}
-
                     <div className="home-playlist-image-wrapper">
-
-                      {firstMusic?.coverImageUrl ? (
-
+                      {playlistCover ? (
                         <img
-                          src={firstMusic.coverImageUrl}
-                          alt={playlist.title}
+                          src={playlistCover}
+                          alt={playlist.title || "Playlist cover"}
                           className="home-playlist-image"
                         />
-
                       ) : (
-
                         <div className="home-playlist-placeholder">
                           🎵
                         </div>
-
                       )}
-
-
-                      {/* =========================
-                          Play First Song
-                      ========================= */}
 
                       {firstMusic?._id && (
-
                         <button
-  className="home-playlist-play"
-  onClick={(e) => {
-    e.stopPropagation();
-
-    const firstMusic = playlist.musics?.[0];
-
-    if (!firstMusic?._id) return;
-
-    socket?.emit("playMusic", {
-      musicId: firstMusic._id,
-      currentTime: 0,
-    });
-
-    navigate(
-      `/music/${firstMusic._id}?sync=true&time=0`
-    );
-  }}
->
-  ▶
-</button>
-
+                          type="button"
+                          className="home-playlist-play"
+                          aria-label={`Play ${playlist.title || "playlist"}`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handlePlayMusic(firstMusic);
+                          }}
+                        >
+                          ▶
+                        </button>
                       )}
-
                     </div>
-
-
-                    {/* =========================
-                        Playlist Information
-                    ========================= */}
 
                     <div className="home-playlist-content">
-
-                      <h3>
-                        {playlist.title}
-                      </h3>
-
-                      <p>
-                        {playlist.artist}
-                      </p>
-
-                      <span>
-                        {playlist.musics?.length || 0} songs
-                      </span>
-
+                      <h3>{playlist.title || "Untitled Playlist"}</h3>
+                      <p>{playlist.artist || "Unknown Artist"}</p>
+                      <span>{playlist.musics?.length || 0} songs</span>
                     </div>
-
                   </div>
-
                 );
               })}
-
             </div>
-
           )}
-
         </section>
 
-
-        {/* =====================================================
-            MUSIC SECTION
-        ===================================================== */}
-
+        {/* ================= POPULAR MUSIC ================= */}
         <section className="home-section">
-
           <div className="home-section-header">
-
             <div>
-
-              <h2>
-                Popular Music
-              </h2>
-
-              <p>
-                Listen to music from our artists
-              </p>
-
+              <h2>Popular Music</h2>
+              <p>Listen to music from our artists</p>
             </div>
 
+            {/* Opens the separate All Music page */}
             <button
+              type="button"
               className="home-view-all"
-              onClick={() => {
-                // Future: navigate("/music")
-              }}
+              onClick={() => navigate("/music")}
             >
               View All
             </button>
-
           </div>
-
-
-          {/* No Music */}
 
           {musics.length === 0 ? (
-
             <div className="home-empty">
-
               <div>🎵</div>
-
-              <h3>
-                No music available
-              </h3>
-
-              <p>
-                New music will appear here.
-              </p>
-
+              <h3>No music available</h3>
+              <p>New music will appear here.</p>
             </div>
-
           ) : (
-
             <div className="home-music-list">
+              {musics.map((music, index) => {
+                const cover = getCoverImage(music);
 
-              {musics.map((music, index) => (
+                return (
+                  <div
+                    className="home-music-card"
+                    key={music._id || index}
+                  >
+                    <span className="home-music-number">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
 
-                <div
-                  className="home-music-card"
-                  key={music._id || index}
-                >
+                    {cover ? (
+                      <img
+                        src={cover}
+                        alt={music.title || "Music cover"}
+                        className="home-music-cover"
+                      />
+                    ) : (
+                      <div className="home-music-cover home-music-cover-fallback">
+                        ♪
+                      </div>
+                    )}
 
-                  {/* Number */}
+                    <div className="home-music-info">
+                      <h3>{music.title || "Untitled"}</h3>
+                      <p>{getArtistName(music)}</p>
+                    </div>
 
-                  <span className="home-music-number">
-
-                    {String(index + 1).padStart(2, "0")}
-
-                  </span>
-
-
-                  {/* Cover */}
-
-                  <img
-                    src={music.coverImageUrl}
-                    alt={music.title}
-                    className="home-music-cover"
-                  />
-
-
-                  {/* Music Information */}
-
-                  <div className="home-music-info">
-
-                    <h3>
-                      {music.title}
-                    </h3>
-
-                    <p>
-                      {music.artist}
-                    </p>
-
+                    <button
+                      type="button"
+                      className="home-music-play"
+                      aria-label={`Play ${music.title || "song"}`}
+                      onClick={() => handlePlayMusic(music)}
+                    >
+                      ▶
+                    </button>
                   </div>
-
-
-                  {/* Play Button */}
-
-                 <button
-  className="home-music-play"
-  onClick={() => handlePlayMusic(music)}
->
-  ▶
-</button>
-
-                </div>
-
-              ))}
-
+                );
+              })}
             </div>
-
           )}
-
         </section>
-
       </div>
 
-
-      {/* =====================================================
-          MINI AUDIO PLAYER
-      ===================================================== */}
-
+      {/* ================= MINI AUDIO PLAYER ================= */}
       {currentMusic && (
-
         <div className="home-player">
-
-          {/* Music Info */}
-
           <div className="home-player-info">
-
-            <img
-              src={currentMusic.coverImageUrl}
-              alt={currentMusic.title}
-              className="home-player-cover"
-            />
+            {getCoverImage(currentMusic) ? (
+              <img
+                src={getCoverImage(currentMusic)}
+                alt={currentMusic.title || "Music cover"}
+                className="home-player-cover"
+              />
+            ) : (
+              <div className="home-player-cover home-music-cover-fallback">
+                ♪
+              </div>
+            )}
 
             <div>
-
-              <h3>
-                {currentMusic.title}
-              </h3>
-
-              <p>
-                {currentMusic.artist}
-              </p>
-
+              <h3>{currentMusic.title || "Untitled"}</h3>
+              <p>{getArtistName(currentMusic)}</p>
             </div>
-
           </div>
-
-
-          {/* Audio */}
 
           <audio
             className="home-audio"
@@ -458,22 +316,16 @@ const Home = ({ socket }) => {
             Your browser does not support the audio element.
           </audio>
 
-
-          {/* Close */}
-
           <button
+            type="button"
             className="home-player-close"
-            onClick={() =>
-              setCurrentMusic(null)
-            }
+            aria-label="Close music player"
+            onClick={() => setCurrentMusic(null)}
           >
             ✕
           </button>
-
         </div>
-
       )}
-
     </div>
   );
 };

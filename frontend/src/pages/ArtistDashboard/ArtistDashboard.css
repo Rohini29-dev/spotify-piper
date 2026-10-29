@@ -9,6 +9,42 @@
    Header
 ========================= */
 
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.create-playlist-btn {
+ 
+  border: none;
+  border-radius: 25px;
+  padding: 13px 22px;
+  background: #1db954;
+  color: #000;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.create-playlist-btn:hover {
+  background: #6d28d9;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+  .dashboard-header-actions {
+    width: 100%;
+  }
+
+  .dashboard-header-actions button {
+    flex: 1;
+  }
+}
+
+
 .dashboard-header {
   display: flex;
   align-items: center;

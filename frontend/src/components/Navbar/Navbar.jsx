@@ -29,34 +29,22 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-container">
-
         {/* Logo */}
-
         <NavLink
           to="/"
           className="navbar-logo"
           onClick={closeMenu}
         >
-          <span className="navbar-logo-icon">
-            ♪
-          </span>
-
-          <span>
-            Spotify-Piper
-          </span>
+          <span className="navbar-logo-icon">♪</span>
+          <span>Spotify-Piper</span>
         </NavLink>
 
-
         {/* Desktop Links */}
-
         <div className="navbar-links">
-
           <NavLink
             to="/"
             className={({ isActive }) =>
-              `navbar-link ${
-                isActive ? "active" : ""
-              }`
+              `navbar-link ${isActive ? "active" : ""}`
             }
           >
             Home
@@ -65,65 +53,39 @@ const Navbar = () => {
           <NavLink
             to="/playlists"
             className={({ isActive }) =>
-              `navbar-link ${
-                isActive ? "active" : ""
-              }`
+              `navbar-link ${isActive ? "active" : ""}`
             }
           >
             Playlists
           </NavLink>
 
           {/* Artist-only links */}
-
           {user?.role === "artist" && (
-            <>
-              <NavLink
-                to="/artist/dashboard"
-                className={({ isActive }) =>
-                  `navbar-link ${
-                    isActive ? "active" : ""
-                  }`
-                }
-              >
-                Artist Dashboard
-              </NavLink>
-
-              <NavLink
-                to="/artist/dashboard/upload-music"
-                className={({ isActive }) =>
-                  `navbar-link ${
-                    isActive ? "active" : ""
-                  }`
-                }
-              >
-                Upload Music
-              </NavLink>
-            </>
+            <NavLink
+              to="/artist/dashboard"
+              className={({ isActive }) =>
+                `navbar-link ${isActive ? "active" : ""}`
+              }
+            >
+              Artist Dashboard
+            </NavLink>
           )}
-
         </div>
 
-
         {/* Right Actions */}
-
         <div className="navbar-actions">
-
           {!loading && !user && (
             <>
               <button
                 className="navbar-login-btn"
-                onClick={() =>
-                  navigate("/login")
-                }
+                onClick={() => navigate("/login")}
               >
                 Login
               </button>
 
               <button
                 className="navbar-register-btn"
-                onClick={() =>
-                  navigate("/register")
-                }
+                onClick={() => navigate("/register")}
               >
                 Register
               </button>
@@ -134,9 +96,7 @@ const Navbar = () => {
             <>
               <div className="navbar-user">
                 <span className="navbar-user-icon">
-                  {user.role === "artist"
-                    ? "🎤"
-                    : "👤"}
+                  {user.role === "artist" ? "🎤" : "👤"}
                 </span>
 
                 <span>
@@ -154,43 +114,29 @@ const Navbar = () => {
               </button>
             </>
           )}
-
         </div>
 
-
-        {/* Mobile Menu */}
-
+        {/* Mobile Menu Button */}
         <button
-          className={`navbar-menu-btn ${
-            menuOpen ? "open" : ""
-          }`}
-          onClick={() =>
-            setMenuOpen(!menuOpen)
-          }
+          className={`navbar-menu-btn ${menuOpen ? "open" : ""}`}
+          onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle navigation"
+          aria-expanded={menuOpen}
         >
           <span></span>
           <span></span>
           <span></span>
         </button>
-
       </div>
 
-
       {/* Mobile Navigation */}
-
       <div
-        className={`navbar-mobile-menu ${
-          menuOpen ? "show" : ""
-        }`}
+        className={`navbar-mobile-menu ${menuOpen ? "show" : ""}`}
       >
-
         <NavLink
           to="/"
           className={({ isActive }) =>
-            `mobile-nav-link ${
-              isActive ? "active" : ""
-            }`
+            `mobile-nav-link ${isActive ? "active" : ""}`
           }
           onClick={closeMenu}
         >
@@ -200,52 +146,29 @@ const Navbar = () => {
         <NavLink
           to="/playlists"
           className={({ isActive }) =>
-            `mobile-nav-link ${
-              isActive ? "active" : ""
-            }`
+            `mobile-nav-link ${isActive ? "active" : ""}`
           }
           onClick={closeMenu}
         >
           📀 Playlists
         </NavLink>
 
-
         {/* Artist mobile links */}
-
         {user?.role === "artist" && (
-          <>
-            <NavLink
-              to="/artist/dashboard"
-              className={({ isActive }) =>
-                `mobile-nav-link ${
-                  isActive ? "active" : ""
-                }`
-              }
-              onClick={closeMenu}
-            >
-              🎤 Artist Dashboard
-            </NavLink>
-
-            <NavLink
-              to="/artist/dashboard/upload-music"
-              className={({ isActive }) =>
-                `mobile-nav-link ${
-                  isActive ? "active" : ""
-                }`
-              }
-              onClick={closeMenu}
-            >
-              ⬆ Upload Music
-            </NavLink>
-          </>
+          <NavLink
+            to="/artist/dashboard"
+            className={({ isActive }) =>
+              `mobile-nav-link ${isActive ? "active" : ""}`
+            }
+            onClick={closeMenu}
+          >
+            🎤 Artist Dashboard
+          </NavLink>
         )}
 
-
         {/* Auth actions */}
-
         {!loading && !user && (
           <div className="mobile-auth-actions">
-
             <button
               className="mobile-login-btn"
               onClick={() => {
@@ -265,19 +188,14 @@ const Navbar = () => {
             >
               Register
             </button>
-
           </div>
         )}
 
-
         {user && (
           <div className="mobile-user-section">
-
             <div className="mobile-user-info">
               <span>
-                {user.role === "artist"
-                  ? "🎤"
-                  : "👤"}
+                {user.role === "artist" ? "🎤" : "👤"}
               </span>
 
               <span>
@@ -293,10 +211,8 @@ const Navbar = () => {
             >
               Logout
             </button>
-
           </div>
         )}
-
       </div>
     </nav>
   );

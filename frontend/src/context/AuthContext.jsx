@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState } from "react";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
 import axios from "axios";
 
 const AuthContext = createContext(null);
@@ -15,11 +22,25 @@ export const AuthProvider = ({ children }) => {
         withCredentials: true,
       });
 
-      console.log("Current user:", response.data);
-
       setUser(response.data.user || response.data);
+
+      return response.data;
     } catch (error) {
       setUser(null);
+
+      if (error.response?.status === 401) {
+        const currentPath =
+          window.location.pathname.toLowerCase();
+
+        if (
+          currentPath !== "/login" &&
+          currentPath !== "/register"
+        ) {
+          window.location.replace("/login");
+        }
+      }
+
+      return null;
     } finally {
       setLoading(false);
     }
@@ -42,6 +63,7 @@ export const AuthProvider = ({ children }) => {
       console.error("Logout error:", error);
     } finally {
       setUser(null);
+      window.location.replace("/login");
     }
   };
 

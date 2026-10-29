@@ -1,12 +1,14 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+
+import { asyncauthLogin } from "../../store/actions/authActions";
 import "./Login.css";
-import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
-  const { refreshUser } = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const {
@@ -22,23 +24,17 @@ const Login = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/login",
-        data,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await dispatch(asyncauthLogin(data));
 
-      console.log("Login success =>", response.data);
-
-      await refreshUser();
+      console.log("LOGIN SUCCESS =>", response);
 
       navigate("/");
     } catch (error) {
       console.error(
-        "Login error =>",
-        error.response?.data?.message || error.message
+        "LOGIN ERROR =>",
+        error?.response?.data?.message ||
+          error?.message ||
+          "Login failed"
       );
     }
   };
@@ -46,17 +42,17 @@ const Login = () => {
   return (
     <main className="login-page">
       <div className="login-card">
-
+        {/* Header */}
         <div className="login-header">
           <h1>Welcome back</h1>
           <p>Login to your account to continue.</p>
         </div>
 
+        {/* Login Form */}
         <form
           className="login-form"
           onSubmit={handleSubmit(onSubmit)}
         >
-
           {/* Email */}
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -93,7 +89,8 @@ const Login = () => {
                 required: "Password is required",
                 minLength: {
                   value: 6,
-                  message: "Password must be at least 6 characters",
+                  message:
+                    "Password must be at least 6 characters",
                 },
               })}
             />
@@ -113,7 +110,6 @@ const Login = () => {
           >
             {isSubmitting ? "Logging in..." : "Login"}
           </button>
-
         </form>
 
         {/* Divider */}
@@ -139,7 +135,6 @@ const Login = () => {
           Don't have an account?{" "}
           <Link to="/register">Create an account</Link>
         </p>
-
       </div>
     </main>
   );

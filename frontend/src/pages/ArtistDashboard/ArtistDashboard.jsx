@@ -1,65 +1,112 @@
-import { useState } from "react";
-import "./ArtistDashboard.css";
 import { useEffect } from "react";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
+import { asyncDeletePlaylist, asyncGetArtistDashboard } from "../../store/actions/musicAction";
+
+import "./ArtistDashboard.css";
+
 const ArtistDashboard = () => {
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const [musics, setmusics] = useState([]);
-const [playlists, setplaylists] = useState([]);
+  const {
+    artistMusics: musics,
+    artistPlaylists: playlists,
+    artistDashboardLoading: loading,
+    artistDashboardError: error,
+  } = useSelector((state) => state.musicReducer);
 
+  useEffect(() => {
+    dispatch(asyncGetArtistDashboard());
+  }, [dispatch]);
 
- useEffect(() => {
-  const fetchArtistData = async () => {
-    try {
-      const [musicRes, playlistRes] = await Promise.all([
-        axios.get("http://localhost:3002/api/music/artist-musics", {
-          withCredentials: true,
-        }),
-
-        axios.get("http://localhost:3002/api/music/playlist/artist", {
-          withCredentials: true,
-        }),
-      ]);
-
-      console.log("Music response:", musicRes.data);
-      console.log("Playlist response:", playlistRes.data);
-
-      setmusics(musicRes.data.musics);
-      setplaylists(playlistRes.data.playlists);
-    } catch (error) {
-      console.log("Error fetching artist dashboard data:", error);
-    }
+  const handleRetry = () => {
+    dispatch(asyncGetArtistDashboard());
   };
 
-  fetchArtistData();
-}, []);
-  
+  const handlePlayMusic = (music) => {
+    if (!music?._id) return;
+
+    navigate(`/music/${music._id}`);
+  };
+
+ const handleOpenPlaylist = (playlist) => {
+  if (!playlist?._id) return;
+
+  navigate("/playlists", {
+    state: {
+      selectedPlaylistId: playlist._id,
+    },
+  });
+};
+
+  const handleDeletePlaylist = async (playlist) => {
+  if (!playlist?._id) return;
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${playlist.title}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await dispatch(asyncDeletePlaylist(playlist._id));
+    alert("Playlist deleted successfully!");
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+        "Unable to delete playlist."
+    );
+  }
+};
 
   return (
     <div className="artist-dashboard">
-      {/* Header */}
-      <section className="dashboard-header">
-        <div>
-          <p className="dashboard-subtitle">ARTIST DASHBOARD</p>
+      {/* HEADER */}
+      
+{/* HEADER */}
+<section className="dashboard-header">
+  <div>
+    <p className="dashboard-subtitle">ARTIST DASHBOARD</p>
 
-          <h1>Welcome back, Artist 👋</h1>
+    <h1>Welcome back, Artist 👋</h1>
 
-          <p className="dashboard-description">
-            Manage your music and playlists from one place.
-          </p>
+    <p className="dashboard-description">
+      Manage your music and playlists from one place.
+    </p>
+  </div>
+
+  <div className="dashboard-header-actions">
+    <button
+      onClick={() => navigate("/artist/dashboard/upload-music")}
+      className="upload-btn"
+    >
+      + Upload Music
+    </button>
+
+   <button
+  className="create-playlist-btn"
+  onClick={() => navigate("/artist/dashboard/create-playlist")}
+>
+  + Create Playlist
+</button>
+  </div>
+</section>
+
+
+      {/* ERROR */}
+      {error && (
+        <div className="dashboard-error" role="alert">
+          <p>{error}</p>
+
+          <button onClick={handleRetry}>
+            Try Again
+          </button>
         </div>
+      )}
 
-        <button 
-        onClick={()=>navigate('/artist/dashboard/upload-music')}
-        className="upload-btn">
-          + Upload Music
-        </button>
-      </section>
-
-      {/* Stats */}
+      {/* STATS */}
       <section className="dashboard-stats">
         <div className="stat-card">
           <span className="stat-icon">🎵</span>
@@ -89,7 +136,7 @@ const [playlists, setplaylists] = useState([]);
         </div>
       </section>
 
-      {/* Musics */}
+      {/* MUSIC */}
       <section className="dashboard-section">
         <div className="section-header">
           <div>
@@ -97,91 +144,134 @@ const [playlists, setplaylists] = useState([]);
             <p>All songs uploaded by you</p>
           </div>
 
-          <button className="view-all-btn">
-            View All
+          <button
+            className="view-all-btn"
+            onClick={() => navigate("/artist/dashboard/upload-music")}
+          >
+            + Upload Music
           </button>
         </div>
 
-        <div className="music-list">
-          {musics.map((music, index) => (
-            <div className="music-card" key={music.musicUrl || index}>
-              <div className="music-number">
-                {index + 1}
-              </div>
+        {loading ? (
+          <p>Loading your music...</p>
+        ) : musics.length === 0 ? (
+          <div className="dashboard-empty">
+            <span>🎵</span>
 
-              <img
-                src={music.coverImageUrl}
-                alt={music.title}
-                className="music-cover"
-              />
+            <h3>No music uploaded yet</h3>
 
-              <div className="music-info">
-                <h3>{music.title}</h3>
-                <p>{music.artist}</p>
-              </div>
+            <p>
+              Upload your first song to get started.
+            </p>
 
-              <button
-                className="play-btn"
-                onClick={() => {
-                  console.log("Play:", music.musicUrl);
-                }}
+            <button
+              className="upload-btn"
+              onClick={() => navigate("/artist/dashboard/upload-music")}
+            >
+              Upload Your First Song
+            </button>
+          </div>
+        ) : (
+          <div className="music-list">
+            {musics.map((music, index) => (
+              <div
+                className="music-card"
+                key={music._id || index}
               >
-                ▶
-              </button>
-            </div>
-          ))}
-        </div>
+                <div className="music-number">
+                  {index + 1}
+                </div>
+
+                <img
+                  src={
+                    music.coverImageUrl ||
+                    music.coverImageURL ||
+                    ""
+                  }
+                  alt={music.title || "Music cover"}
+                  className="music-cover"
+                />
+
+                <div className="music-info">
+                  <h3>{music.title || "Untitled Music"}</h3>
+
+                  <p>{music.artist || "Unknown Artist"}</p>
+                </div>
+
+                <button
+                  className="play-btn"
+                  onClick={() => handlePlayMusic(music)}
+                  aria-label={`Play ${music.title || "music"}`}
+                >
+                  ▶
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Playlists */}
+      {/* PLAYLISTS */}
       <section className="dashboard-section">
         <div className="section-header">
           <div>
             <h2>Your Playlists</h2>
             <p>Your created playlists</p>
           </div>
-
-          <button className="view-all-btn">
-            View All
-          </button>
         </div>
 
-        <div className="playlist-grid">
-          {playlists.map((playlist, index) => (
-            <div
-              className="playlist-card"
-              key={playlist.title || index}
-            >
-              <div className="playlist-image-wrapper">
-                {playlist.musics?.[0]?.coverImageUrl ? (
-                  <img
-                    src={playlist.musics[0].coverImageUrl}
-                    alt={playlist.title}
-                    className="playlist-image"
-                  />
-                ) : (
-                  <div className="playlist-placeholder">
-                    🎵
-                  </div>
-                )}
+        {loading ? (
+          <p>Loading your playlists...</p>
+        ) : playlists.length === 0 ? (
+          <div className="dashboard-empty">
+            <span>📀</span>
 
-                <button className="playlist-play-btn">
-                  ▶
-                </button>
+            <h3>No playlists yet</h3>
+
+            <p>Your created playlists will appear here.</p>
+          </div>
+        ) : (
+          <div className="playlist-grid">
+            {playlists.map((playlist, index) => (
+              <div
+                className="playlist-card"
+                key={playlist._id || index}
+              >
+                <div className="playlist-image-wrapper">
+                  {playlist.musics?.[0]?.coverImageUrl ? (
+                    <img
+                      src={playlist.musics[0].coverImageUrl}
+                      alt={playlist.title || "Playlist cover"}
+                      className="playlist-image"
+                    />
+                  ) : (
+                    <div className="playlist-placeholder">
+                      🎵
+                    </div>
+                  )}
+
+                  <button
+                    className="playlist-play-btn"
+                    onClick={() => handleOpenPlaylist(playlist)}
+                    aria-label={`Open ${playlist.title || "playlist"}`}
+                  >
+                    ▶
+                  </button>
+                </div>
+
+                <div className="playlist-content">
+                  <h3>{playlist.title || "Untitled Playlist"}</h3>
+
+                  <p>{playlist.artist || "Your playlist"}</p>
+
+                  <span>
+                    {playlist.musics?.length || 0} songs
+                  </span>
+                </div>
               </div>
-
-              <div className="playlist-content">
-                <h3>{playlist.title}</h3>
-
-                <p>{playlist.artist}</p>
-
-                <span>
-                  {playlist.musics?.length || 0} songs
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

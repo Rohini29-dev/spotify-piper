@@ -9,6 +9,9 @@ import ArtistDashboard from "../pages/ArtistDashboard/ArtistDashboard";
 import UploadMusic from "../pages/UploadMusic/UploadMusic";
 import MusicPlayer from "../pages/MusicPlayer/MusicPlayer";
 import Playlists from "../pages/Playlist/Playlists";
+import CreatePlaylist from "../pages/CreatePlaylist/CreatePlaylist";
+import AllMusic from "../pages/AllMusic/AllMusic";
+
 
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute";
 import RoleProtectedRoute from "../components/RoleProtectedRoute/RoleProtectedRoute";
@@ -140,6 +143,12 @@ const MainRoutes = () => {
           MUSIC PLAYER
       ===================================== */}
 
+
+        <Route
+  path="/music"
+  element={<AllMusic socket={socket} />}
+/>
+
       <Route
         path="/music/:id"
         element={
@@ -164,6 +173,13 @@ const MainRoutes = () => {
             />
           }
         >
+
+
+<Route
+  path="/artist/dashboard/create-playlist"
+  element={<CreatePlaylist />}
+/>
+
 
           <Route
             path="/artist/dashboard"

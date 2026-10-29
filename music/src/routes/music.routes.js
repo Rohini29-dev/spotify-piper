@@ -36,6 +36,10 @@ router.get('/playlist', authMiddleware.authUserMiddleware, musicController.getPl
 /* GET /api/music/playlist/:id */
 router.get('/playlist/:id', authMiddleware.authUserMiddleware, musicController.getPlaylistById) 
 
-
+router.delete(
+  "/playlist/:id",
+  authMiddleware.authArtistMiddleware,
+  musicController.deletePlaylist
+);
 
 export default router 

@@ -1,11 +1,26 @@
+
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+  asyncUploadMusic,
+} from "../../store/actions/uploadMusicActions";
+
+import {
+  clearUploadMusicState,
+} from "../../store/reducers/uploadMusicSlice";
+
 import "./UploadMusic.css";
 
 const UploadMusic = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { loading } = useSelector(
+    (state) => state.uploadMusicReducer
+  );
 
   const {
     register,
@@ -23,19 +38,13 @@ const UploadMusic = () => {
 
   const [imagePreview, setImagePreview] = useState("");
   const [musicPreview, setMusicPreview] = useState("");
-
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [serverError, setServerError] = useState("");
 
-  // Watch form values
   const musicFile = watch("music")?.[0];
   const coverImageFile = watch("coverImage")?.[0];
 
-  /* =========================
-     Image Preview
-  ========================= */
-
+  // Image preview
   useEffect(() => {
     if (!coverImageFile) {
       setImagePreview("");
@@ -43,18 +52,12 @@ const UploadMusic = () => {
     }
 
     const imageUrl = URL.createObjectURL(coverImageFile);
-
     setImagePreview(imageUrl);
 
-    return () => {
-      URL.revokeObjectURL(imageUrl);
-    };
+    return () => URL.revokeObjectURL(imageUrl);
   }, [coverImageFile]);
 
-  /* =========================
-     Music Preview
-  ========================= */
-
+  // Audio preview
   useEffect(() => {
     if (!musicFile) {
       setMusicPreview("");
@@ -62,92 +65,56 @@ const UploadMusic = () => {
     }
 
     const musicUrl = URL.createObjectURL(musicFile);
-
     setMusicPreview(musicUrl);
 
-    return () => {
-      URL.revokeObjectURL(musicUrl);
-    };
+    return () => URL.revokeObjectURL(musicUrl);
   }, [musicFile]);
 
-  /* =========================
-     Submit
-  ========================= */
-
+  // Submit using Redux
   const onSubmit = async (data) => {
     setMessage("");
     setServerError("");
 
+    const formData = new FormData();
+
+    formData.append("title", data.title.trim());
+    formData.append("music", data.music[0]);
+    formData.append("coverImage", data.coverImage[0]);
+
     try {
-      setLoading(true);
-
-      const formData = new FormData();
-
-      // Text field
-      formData.append("title", data.title.trim());
-
-      // Files
-      formData.append("music", data.music[0]);
-      formData.append("coverImage", data.coverImage[0]);
-
-      const response = await axios.post(
-        "http://localhost:3002/api/music/upload",
-        formData,
-        {
-          withCredentials: true,
-        }
-      );
-
-      console.log("Upload response:", response.data);
+      const response = await dispatch(
+        asyncUploadMusic(formData)
+      ).unwrap();
 
       setMessage(
-        response.data?.message || "Music uploaded successfully!"
+        response?.message || "Music uploaded successfully!"
       );
 
-      // Reset form
       reset();
 
-      setImagePreview("");
-      setMusicPreview("");
-
-      // Redirect after success
       setTimeout(() => {
         navigate("/artist/dashboard");
       }, 1200);
     } catch (error) {
-      console.error("Upload error:", error);
-
       setServerError(
-        error.response?.data?.message ||
-          "Failed to upload music. Please try again."
+        typeof error === "string"
+          ? error
+          : "Failed to upload music. Please try again."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
-  /* =========================
-     Reset
-  ========================= */
-
+  // Reset form and Redux status
   const handleReset = () => {
     reset();
-
-    setImagePreview("");
-    setMusicPreview("");
-
     setMessage("");
     setServerError("");
+    dispatch(clearUploadMusicState());
   };
 
   return (
     <div className="upload-page">
       <div className="upload-container">
-
-        {/* =========================
-            Header
-        ========================= */}
-
         <div className="upload-header">
           <button
             type="button"
@@ -164,28 +131,18 @@ const UploadMusic = () => {
           <h1>Upload Your Music 🎵</h1>
 
           <p className="upload-description">
-            Share your music with your audience by uploading a
-            song and its cover image.
+            Share your music with your audience by uploading
+            a song and its cover image.
           </p>
         </div>
-
-        {/* =========================
-            Form
-        ========================= */}
 
         <form
           className="upload-form"
           onSubmit={handleSubmit(onSubmit)}
         >
-
-          {/* =========================
-              Music Title
-          ========================= */}
-
+          {/* Music title */}
           <div className="form-group">
-            <label htmlFor="title">
-              Music Title
-            </label>
+            <label htmlFor="title">Music Title</label>
 
             <input
               id="title"
@@ -194,18 +151,19 @@ const UploadMusic = () => {
               disabled={loading}
               {...register("title", {
                 required: "Music title is required",
-
                 minLength: {
                   value: 2,
                   message:
                     "Music title must contain at least 2 characters",
                 },
-
                 maxLength: {
                   value: 100,
                   message:
                     "Music title cannot exceed 100 characters",
                 },
+                validate: (value) =>
+                  value.trim().length >= 2 ||
+                  "Music title must contain at least 2 characters",
               })}
             />
 
@@ -216,14 +174,9 @@ const UploadMusic = () => {
             )}
           </div>
 
-          {/* =========================
-              Music File
-          ========================= */}
-
+          {/* Music file */}
           <div className="form-group">
-            <label htmlFor="music">
-              Music File
-            </label>
+            <label htmlFor="music">Music File</label>
 
             <label
               htmlFor="music"
@@ -231,9 +184,7 @@ const UploadMusic = () => {
                 musicFile ? "file-selected" : ""
               }`}
             >
-              <div className="file-icon">
-                🎵
-              </div>
+              <div className="file-icon">🎵</div>
 
               <div className="file-content">
                 <h3>
@@ -245,16 +196,13 @@ const UploadMusic = () => {
                 <p>
                   {musicFile
                     ? `${(
-                        musicFile.size /
-                        (1024 * 1024)
+                        musicFile.size / (1024 * 1024)
                       ).toFixed(2)} MB`
                     : "MP3, WAV or other audio files"}
                 </p>
               </div>
 
-              <span className="browse-btn">
-                Browse
-              </span>
+              <span className="browse-btn">Browse</span>
 
               <input
                 id="music"
@@ -263,7 +211,6 @@ const UploadMusic = () => {
                 disabled={loading}
                 {...register("music", {
                   required: "Music file is required",
-
                   validate: {
                     validFile: (files) => {
                       const file = files?.[0];
@@ -289,13 +236,10 @@ const UploadMusic = () => {
               </p>
             )}
 
-            {/* Music Preview */}
-
             {musicPreview && (
               <div className="music-preview">
                 <div className="preview-heading">
                   <span>🎧 Music Preview</span>
-
                   <span className="preview-file-name">
                     {musicFile?.name}
                   </span>
@@ -306,21 +250,15 @@ const UploadMusic = () => {
                   controls
                   src={musicPreview}
                 >
-                  Your browser does not support the audio
-                  element.
+                  Your browser does not support audio playback.
                 </audio>
               </div>
             )}
           </div>
 
-          {/* =========================
-              Cover Image
-          ========================= */}
-
+          {/* Cover image */}
           <div className="form-group">
-            <label htmlFor="coverImage">
-              Cover Image
-            </label>
+            <label htmlFor="coverImage">Cover Image</label>
 
             <label
               htmlFor="coverImage"
@@ -335,9 +273,7 @@ const UploadMusic = () => {
                   className="cover-preview"
                 />
               ) : (
-                <div className="file-icon">
-                  🖼️
-                </div>
+                <div className="file-icon">🖼️</div>
               )}
 
               <div className="file-content">
@@ -350,25 +286,21 @@ const UploadMusic = () => {
                 <p>
                   {coverImageFile
                     ? `${(
-                        coverImageFile.size /
-                        (1024 * 1024)
+                        coverImageFile.size / (1024 * 1024)
                       ).toFixed(2)} MB`
                     : "PNG, JPG or JPEG"}
                 </p>
               </div>
 
-              <span className="browse-btn">
-                Browse
-              </span>
+              <span className="browse-btn">Browse</span>
 
               <input
                 id="coverImage"
                 type="file"
-                accept="image/png,image/jpeg,image/jpg"
+                accept="image/png,image/jpeg"
                 disabled={loading}
                 {...register("coverImage", {
                   required: "Cover image is required",
-
                   validate: {
                     validImage: (files) => {
                       const file = files?.[0];
@@ -377,8 +309,12 @@ const UploadMusic = () => {
                         return "Cover image is required";
                       }
 
-                      if (!file.type.startsWith("image/")) {
-                        return "Please select a valid image";
+                      if (
+                        !["image/png", "image/jpeg"].includes(
+                          file.type
+                        )
+                      ) {
+                        return "Please select a PNG or JPEG image";
                       }
 
                       return true;
@@ -393,8 +329,6 @@ const UploadMusic = () => {
                 {errors.coverImage.message}
               </p>
             )}
-
-            {/* Image Preview */}
 
             {imagePreview && (
               <div className="image-preview-container">
@@ -413,30 +347,21 @@ const UploadMusic = () => {
             )}
           </div>
 
-          {/* =========================
-              Server Error
-          ========================= */}
-
+          {/* Error message */}
           {serverError && (
             <div className="form-message error-message">
               ❌ {serverError}
             </div>
           )}
 
-          {/* =========================
-              Success Message
-          ========================= */}
-
+          {/* Success message */}
           {message && (
             <div className="form-message success-message">
               ✅ {message}
             </div>
           )}
 
-          {/* =========================
-              Buttons
-          ========================= */}
-
+          {/* Actions */}
           <div className="upload-actions">
             <button
               type="button"
@@ -454,17 +379,14 @@ const UploadMusic = () => {
             >
               {loading ? (
                 <>
-                  <span className="button-spinner"></span>
+                  <span className="button-spinner" />
                   Uploading...
                 </>
               ) : (
-                <>
-                  ⬆ Upload Music
-                </>
+                <>⬆ Upload Music</>
               )}
             </button>
           </div>
-
         </form>
       </div>
     </div>

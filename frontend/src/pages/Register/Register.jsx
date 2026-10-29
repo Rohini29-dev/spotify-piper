@@ -1,11 +1,15 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+
+import { asyncauthRegister } from "../../store/actions/authActions";
 import "./Register.css";
 
 const Register = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const {
     register,
@@ -17,7 +21,7 @@ const Register = () => {
       fullName: {
         firstName: "",
         lastName: "",
-      },
+      },  
       password: "",
       role: "user",
     },
@@ -25,21 +29,17 @@ const Register = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/register",
-        data,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await dispatch(asyncauthRegister(data));
 
-      console.log("Register success =>", response.data);
+      console.log("REGISTER SUCCESS =>", response);
 
-      navigate("/login");
+      navigate("/")
     } catch (error) {
       console.error(
-        "Register error =>",
-        error.response?.data?.message || error.message
+        "REGISTER ERROR =>",
+        error?.response?.data?.message ||
+          error?.message ||
+          "Registration failed"
       );
     }
   };
@@ -47,19 +47,17 @@ const Register = () => {
   return (
     <main className="register-page">
       <div className="register-card">
-
         {/* Header */}
         <div className="register-header">
           <h1>Create your account</h1>
           <p>Join Spotify-Piper and start listening.</p>
         </div>
 
-        {/* Form */}
+        {/* Registration Form */}
         <form
           className="register-form"
           onSubmit={handleSubmit(onSubmit)}
         >
-
           {/* First Name */}
           <div className="form-group">
             <label htmlFor="firstName">First name</label>
@@ -72,7 +70,8 @@ const Register = () => {
                 required: "First name is required",
                 minLength: {
                   value: 2,
-                  message: "First name must be at least 2 characters",
+                  message:
+                    "First name must be at least 2 characters",
                 },
               })}
             />
@@ -96,7 +95,8 @@ const Register = () => {
                 required: "Last name is required",
                 minLength: {
                   value: 2,
-                  message: "Last name must be at least 2 characters",
+                  message:
+                    "Last name must be at least 2 characters",
                 },
               })}
             />
@@ -144,7 +144,8 @@ const Register = () => {
                 required: "Password is required",
                 minLength: {
                   value: 6,
-                  message: "Password must be at least 6 characters",
+                  message:
+                    "Password must be at least 6 characters",
                 },
               })}
             />
@@ -161,7 +162,6 @@ const Register = () => {
             <label className="role-label">Account type</label>
 
             <div className="role-options">
-
               <label className="role-option">
                 <input
                   type="radio"
@@ -183,7 +183,6 @@ const Register = () => {
                 />
                 <span>Artist</span>
               </label>
-
             </div>
 
             {errors.role && (
@@ -203,7 +202,6 @@ const Register = () => {
               ? "Creating account..."
               : "Create account"}
           </button>
-
         </form>
 
         {/* Divider */}
@@ -211,7 +209,7 @@ const Register = () => {
           <span>OR</span>
         </div>
 
-        {/* Google */}
+        {/* Google Login */}
         <button
           type="button"
           className="google-button"
@@ -229,7 +227,6 @@ const Register = () => {
           Already have an account?{" "}
           <Link to="/login">Login</Link>
         </p>
-
       </div>
     </main>
   );

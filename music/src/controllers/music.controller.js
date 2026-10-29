@@ -1,6 +1,7 @@
 import { uploadFile } from "../services/storage.service.js";
 import musicModel from "../models/music.model.js"
 import playlistModel from "../models/playlist.model.js";
+import mongoose from "mongoose";
 
 
 
@@ -287,4 +288,47 @@ export async function getArtistPlaylists(req, res) {
             message: "Internal server error",
         });
     }
+}
+
+
+
+// Delete playlist — owner only
+export async function deletePlaylist(req, res) {
+  const { id } = req.params;
+
+  try {
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        message: "Invalid playlist ID",
+      });
+    }
+
+    const playlist = await playlistModel.findById(id);
+
+    if (!playlist) {
+      return res.status(404).json({
+        message: "Playlist not found",
+      });
+    }
+
+    // Verify that the logged-in artist owns this playlist
+    if (String(playlist.artistId) !== String(req.user.id)) {
+      return res.status(403).json({
+        message: "You are not allowed to delete this playlist",
+      });
+    }
+
+    await playlist.deleteOne();
+
+    return res.status(200).json({
+      message: "Playlist deleted successfully",
+      playlistId: id,
+    });
+  } catch (error) {
+    console.error("DELETE PLAYLIST ERROR:", error);
+
+    return res.status(500).json({
+      message: "Unable to delete playlist",
+    });
+  }
 }
